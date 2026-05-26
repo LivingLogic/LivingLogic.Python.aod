@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "aod"
+version = "0.1.0"
+description = "A descriptor for instance attributes whose values are determined on demand on first access."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [
+    { name = "Walter Dörwald", email = "walter@livinglogic.de" },
+]
+keywords = ["descriptor", "lazy", "attribute", "on-demand"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+Homepage = "https://github.com/LivingLogic/aod"
+Source = "https://github.com/LivingLogic/aod"
+"Bug Tracker" = "https://github.com/LivingLogic/aod/issues"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["src/aod.py"]
+sources = ["src"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/aod.py",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
