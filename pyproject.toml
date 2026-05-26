@@ -39,6 +39,7 @@ sources = ["src"]
 include = [
     "src/aod.py",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE",
     "pyproject.toml",
 ]
