@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aod"
-version = "0.1.0"
+version = "0.1.1"
 description = "A descriptor for instance attributes whose values are determined on demand on first access."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -27,9 +27,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/LivingLogic/aod"
-Source = "https://github.com/LivingLogic/aod"
-"Bug Tracker" = "https://github.com/LivingLogic/aod/issues"
+Homepage = "https://github.com/LivingLogic/LivingLogic.Python.aod"
+Source = "https://github.com/LivingLogic/LivingLogic.Python.aod"
+"Bug Tracker" = "https://github.com/LivingLogic/LivingLogic.Python.aod/issues"
 
 [tool.hatch.build.targets.wheel]
 only-include = ["src/aod.py"]
