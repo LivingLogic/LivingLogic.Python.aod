@@ -1,6 +1,6 @@
 # aod
 
-`AttrOnDemand` — a descriptor for instance attributes whose values are
+`Attr` — a descriptor for instance attributes whose values are
 determined on demand on first access.
 
 ## Installation
@@ -18,11 +18,11 @@ to the constructor. Several attributes can share the same fetch method, so
 a single call can populate them all at once:
 
 ```python
-from aod import AttrOnDemand
+import aod
 
 class Person:
-	firstname = AttrOnDemand[str]("fetch")
-	lastname = AttrOnDemand[str]("fetch")
+	firstname = aod.Attr[str]("fetch")
+	lastname = aod.Attr[str]("fetch")
 
 	def __init__(self, dbid):
 		self.dbid = dbid
@@ -53,10 +53,10 @@ del p.firstname
 print(p.firstname)   # fetches again (and refreshes lastname too)
 ```
 
-Use `AttrOnDemand.known(instance)` to check whether a value has already
+Use `Attr.known(instance)` to check whether a value has already
 been computed without triggering a fetch.
 
-Note that using `AttrOnDemand` descriptors only works for instances that
+Note that using `Attr` descriptors only works for instances that
 have instance dictionaries.
 
 ## License

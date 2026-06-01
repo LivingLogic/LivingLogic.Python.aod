@@ -1,6 +1,6 @@
 import typing
 
-class AttrOnDemand[T]:
+class Attr[T]:
 	"""
 	A descriptor for an instance attribute whose value is determined on demand.
 
@@ -14,15 +14,15 @@ class AttrOnDemand[T]:
 	values more than once if the values is accessed more than once (like a
 	`property` would).
 
-	:class:`!AttrOnDemand` can be used like this:
+	:class:`!Attr` can be used like this:
 
 	.. sourcecode:: python
 
 		import aod
 
 		class Person:
-			firstname = aod.AttrOnDemand[str]("fetch")
-			lastname = aod.AttrOnDemand[str]("fetch")
+			firstname = aod.Attr[str]("fetch")
+			lastname = aod.Attr[str]("fetch")
 
 			def __init__(self, dbid):
 				self.dbid = dbid
@@ -42,7 +42,7 @@ class AttrOnDemand[T]:
 	the fetch method. The setter simply sets ``_foo`` in the instance dictionary,
 	so the fetch method should set the attribute value via the setter.
 
-	Note that using :class:`!AttrOnDemand` descriptors only work for instances
+	Note that using :class:`!Attr` descriptors only work for instances
 	that have instance dictionaries.
 	"""
 	def __init__(self, fetch_method_name: str):
@@ -58,7 +58,7 @@ class AttrOnDemand[T]:
 		self.private_attr_name = f"_{name}"
 
 	@typing.overload
-	def __get__(self, instance: None, type: type | None = None, /) -> "AttrOnDemand[T]": ...
+	def __get__(self, instance: None, type: type | None = None, /) -> "Attr[T]": ...
 	@typing.overload
 	def __get__(self, instance: object, type: type | None = None, /) -> T: ...
 	def __get__(self, instance, type=None):
@@ -87,3 +87,7 @@ class AttrOnDemand[T]:
 		This returns whether the appropriate key is in the instance dict.
 		"""
 		return self.private_attr_name in instance.__dict__
+
+
+# For backwards compatibility
+AttrOnDemand = Attr
