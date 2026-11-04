@@ -1,4 +1,5 @@
-import typing
+import typing, inspect
+
 
 class Attr[T]:
 	"""
@@ -21,8 +22,8 @@ class Attr[T]:
 		import aod
 
 		class Person:
-			firstname = aod.Attr[str]("fetch")
-			lastname = aod.Attr[str]("fetch")
+			firstname: aod.Attr[str] = aod.Attr("fetch")
+			lastname: aod.Attr[str] = aod.Attr("fetch")
 
 			def __init__(self, dbid):
 				self.dbid = dbid
@@ -42,23 +43,53 @@ class Attr[T]:
 	the fetch method. The setter simply sets ``_foo`` in the instance dictionary,
 	so the fetch method should set the attribute value via the setter.
 
+	The type of the attribute can be given in the annotation (as above) or as
+	a type parameter (``firstname = aod.Attr[str]("fetch")``). Both spellings
+	tell type checkers that ``person.firstname`` is a ``str``. Prefer the
+	annotation: it declares the attribute, so ``Person.firstname`` is an
+	``Attr[str]`` for type checkers too (with the type parameter alone they
+	also take the assignments in the fetch method as declarations, so
+	``Person.firstname`` becomes ``Attr[str] | str``). An attribute without
+	either is simply untyped. The annotation is evaluated lazily (on the first
+	access to :attr:`type`), so it may refer to classes that are defined after
+	the class that contains the attribute.
+
+	:attr:`type` returns the type of the attribute, which allows code that
+	derives something from the attributes of a class (e.g. serialization
+	models) to find out their types.
+
+	Compared to :class:`functools.cached_property` an :class:`!Attr` is
+	declared in one line without a function body, and one fetch method can
+	set any number of attributes at once (e.g. all columns of a database row),
+	whereas each ``cached_property`` computes exactly one value in its own
+	function.
+
 	Note that using :class:`!Attr` descriptors only work for instances
 	that have instance dictionaries.
 	"""
+
+	owner: type
+	public_attr_name: str
+	private_attr_name: str
+
 	def __init__(self, fetch_method_name: str):
 		self.fetch_method_name = fetch_method_name
-		self.public_attr_name = None
-		self.private_attr_name = None
 
 	def __repr__(self) -> str:
-		return f"<{self.__class__.__module__}.{self.__class__.__qualname__} public_attr_name={self.public_attr_name!r} fetch_method_name={self.fetch_method_name!r} at {id(self):x}>"
+		parts = [f"{self.__class__.__module__}.{self.__class__.__qualname__}"]
+		if "public_attr_name" in self.__dict__: # Set by `__set_name__`
+			parts.append(f"public_attr_name={self.public_attr_name!r}")
+		parts.append(f"fetch_method_name={self.fetch_method_name!r}")
+		parts.append(f"at {id(self):#x}")
+		return f"<{' '.join(parts)}>"
 
-	def __set_name__(self, owner, name):
+	def __set_name__(self, owner: type, name: str) -> None:
+		self.owner = owner
 		self.public_attr_name = name
 		self.private_attr_name = f"_{name}"
 
 	@typing.overload
-	def __get__(self, instance: None, type: type | None = None, /) -> "Attr[T]": ...
+	def __get__(self, instance: None, type: type | None = None, /) -> Attr[T]: ...
 	@typing.overload
 	def __get__(self, instance: object, type: type | None = None, /) -> T: ...
 	def __get__(self, instance, type=None):
@@ -69,10 +100,10 @@ class Attr[T]:
 		else:
 			return self
 
-	def __set__(self, instance: object, value: T):
+	def __set__(self, instance: object, value: T) -> None:
 		setattr(instance, self.private_attr_name, value)
 
-	def __delete__(self, instance: object):
+	def __delete__(self, instance: object) -> None:
 		"""
 		Forget the value of the attribute.
 
@@ -87,6 +118,34 @@ class Attr[T]:
 		This returns whether the appropriate key is in the instance dict.
 		"""
 		return self.private_attr_name in instance.__dict__
+
+	@property
+	def type(self) -> typing.Any:
+		"""
+		The type of the attribute.
+
+		This is the ``T`` from the type parameter ``Attr[T](...)``, else the
+		``T`` from the annotation ``name: Attr[T]`` of the owner class, else the
+		annotation itself, else :data:`typing.Any` (for an unannotated
+		attribute).
+
+		The annotation is evaluated on first use (and the result cached), so
+		it may refer to classes that are defined after the owner class.
+		"""
+		if "_type" not in self.__dict__:
+			orig = getattr(self, "__orig_class__", None)
+			if orig is not None:
+				self._type = typing.get_args(orig)[0]
+			else:
+				# Evaluates lazy annotations (PEP 649) as well as string
+				# annotations (``from __future__ import annotations``)
+				annotations = inspect.get_annotations(self.owner, eval_str=True)
+				annotation = annotations.get(self.public_attr_name, typing.Any)
+				origin = typing.get_origin(annotation)
+				if isinstance(origin, type) and issubclass(origin, Attr): # also subclasses of Attr
+					annotation = typing.get_args(annotation)[0]
+				self._type = annotation
+		return self._type
 
 
 # For backwards compatibility
