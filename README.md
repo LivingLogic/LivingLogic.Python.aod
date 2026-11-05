@@ -56,6 +56,24 @@ print(p.firstname)   # fetches again (and refreshes lastname too)
 Use `Attr.known(instance)` to check whether a value has already
 been computed without triggering a fetch.
 
+An attribute can also be declared without a fetch method. Its value is
+always set explicitly (e.g. in `__init__`), and reading it before it has
+been set raises an `AttributeError`:
+
+```python
+class Person:
+	dbid: aod.Attr[int] = aod.Attr()
+	firstname: aod.Attr[str] = aod.Attr("fetch")
+
+	def __init__(self, dbid):
+		self.dbid = dbid
+```
+
+For on-demand loading such an attribute is pointless, but it is declared
+like the others, so `Attr.type`, `Attr.known()` and code that inspects the
+attributes of a class (see "Types") treat it the same way. The same
+`AttributeError` is raised when the fetch method didn't set the attribute.
+
 Note that using `Attr` descriptors only works for instances that
 have instance dictionaries.
 

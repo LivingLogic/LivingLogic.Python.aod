@@ -64,6 +64,15 @@ class Attr[T]:
 	whereas each ``cached_property`` computes exactly one value in its own
 	function.
 
+	An attribute can also be declared without a fetch method
+	(``dbid: aod.Attr[int] = aod.Attr()``). Its value is always set
+	explicitly (e.g. in ``__init__``), and reading it before it has been set
+	raises an :exc:`AttributeError`. For on-demand loading such an attribute
+	is pointless, but it is declared like the others, so :attr:`type`,
+	:meth:`known` and code that inspects the attributes of a class treat it
+	the same way. The same :exc:`AttributeError` is raised when the fetch
+	method didn't set the attribute.
+
 	Note that using :class:`!Attr` descriptors only work for instances
 	that have instance dictionaries.
 	"""
@@ -72,7 +81,7 @@ class Attr[T]:
 	public_attr_name: str
 	private_attr_name: str
 
-	def __init__(self, fetch_method_name: str):
+	def __init__(self, fetch_method_name: str | None = None):
 		self.fetch_method_name = fetch_method_name
 
 	def __repr__(self) -> str:
@@ -95,8 +104,13 @@ class Attr[T]:
 	def __get__(self, instance, type=None):
 		if instance is not None:
 			if self.private_attr_name not in instance.__dict__:
-				getattr(instance, self.fetch_method_name)()
-			return getattr(instance, self.private_attr_name)
+				message = f"{instance.__class__.__qualname__!r} object has no attribute {self.public_attr_name!r}"
+				if self.fetch_method_name is not None:
+					getattr(instance, self.fetch_method_name)()
+					message += f" after calling the method {self.fetch_method_name!r}"
+				if self.private_attr_name not in instance.__dict__:
+					raise AttributeError(message, name=self.public_attr_name, obj=instance)
+			return instance.__dict__[self.private_attr_name]
 		else:
 			return self
 

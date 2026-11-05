@@ -1,5 +1,18 @@
 # ChangeLog
 
+## 0.4.0 (2026-11-05)
+
+An attribute can now be declared without a fetch method
+(`dbid: aod.Attr[int] = aod.Attr()`). Its value is always set explicitly,
+and reading it before that raises an `AttributeError`. This gives
+attributes that are set in `__init__` the same declaration (and
+`Attr.type`) as the attributes that are loaded on demand.
+
+Reading an attribute that the fetch method didn't set now raises an
+`AttributeError` that names the attribute (instead of one that names the
+private attribute `_name`).
+
+
 ## 0.3.0 (2026-11-04)
 
 The type of an attribute can now be given in an annotation

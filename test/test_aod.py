@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import typing
 
+import pytest
+
 import aod
 
 
@@ -42,6 +44,23 @@ class Field[T](aod.Attr[T]):
 
 class Thing:
 	name: Field[int] = Field("fetch")
+
+
+class Explicit:
+	# Attributes without a fetch method: set in `__init__` or never
+	dbid: aod.Attr[int] = aod.Attr()
+	never: aod.Attr[str] = aod.Attr()
+
+	def __init__(self, dbid):
+		self.dbid = dbid
+
+
+class Forgetful:
+	# A fetch method that doesn't set the attribute
+	name: aod.Attr[str] = aod.Attr("fetch")
+
+	def fetch(self):
+		pass
 
 
 def test_fetch_on_first_access():
@@ -88,6 +107,27 @@ def test_type():
 
 def test_type_attr_subclass():
 	assert Thing.name.type is int
+
+
+def test_without_fetch():
+	e = Explicit(42)
+	assert Explicit.dbid.fetch_method_name is None
+	assert Explicit.dbid.known(e)
+	assert e.dbid == 42
+	assert Explicit.dbid.type is int
+	assert not Explicit.never.known(e)
+	with pytest.raises(AttributeError, match="'Explicit' object has no attribute 'never'$") as info:
+		e.never
+	assert info.value.name == "never"
+	assert info.value.obj is e
+	e.never = "now"
+	assert e.never == "now"
+
+
+def test_fetch_doesnt_set():
+	f = Forgetful()
+	with pytest.raises(AttributeError, match="'Forgetful' object has no attribute 'name' after calling the method 'fetch'"):
+		f.name
 
 
 def test_backwards_compatibility():
